@@ -59,7 +59,7 @@ app.message(async ({ message, say }) => {
 
   let contextMessages: string = '';
 
-  if (botConfig.cacheMode === 'default') {
+  if (botConfig.cacheMode === 'kv') {
     contextMessages = (await getCachedContext(botConfig.channelId)) || '';
   }
 
@@ -72,7 +72,7 @@ app.message(async ({ message, say }) => {
 
     contextMessages = processMessages(channelHistory.messages, botConfig.allowedUserIds ?? []);
 
-    if (botConfig.cacheMode === 'default') {
+    if (botConfig.cacheMode === 'kv') {
       await setCachedContext(botConfig.channelId, contextMessages);
     }
   }

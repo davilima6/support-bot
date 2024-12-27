@@ -7,7 +7,7 @@ This project is a Slack bot that uses AI to answer questions based on channel co
 - [Data Flow](#data-flow)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Vercel KV Cache Setup (Optional)](#vercel-kv-cache-setup-optional)
+- [Caching with Vercel KV (optional)](#caching-withvercel-kv-optional)
 - [Installing the bot in a Slack organization](#installing-the-bot-in-a-slack-organization)
 
 ### Data Flow
@@ -19,16 +19,17 @@ graph TD
     C -->|"Fetches channel history"| D["Slack API"]
     D -->|"Returns messages"| C
     C -->|"Processes messages"| E["AI Workflow"]
-    E -->|"Generates initial answer"| F["AI Model 1"]
-    F -->|"Passes initial answer"| G["AI Model 2"]
-    G -->|"Verifies and improves answer"| E
+    E -->|"Generates initial answer"| F["AI Service"]
+    F -->|"Passes initial answer"| G["AI Model 1"]
+    G -->|"Verifies and improves answer"| H["AI Model 2"]
+    H -->|"Returns improved answer"| F
     subgraph App
         C
         E
     end
     subgraph Optional Caching
-        E -->|"Caches answer"| H["Vercel KV"]
-        H -.->|"Returns cached answer"| C
+        E -.->|"Caches answer"| I["Vercel KV"]
+        I -.->|"Returns cached answer"| C
     end
     E -->|"Returns final answer"| C
     C -->|"Sends response"| B
@@ -36,7 +37,8 @@ graph TD
     subgraph Data Sources
         C -->|"Fetches data"| D
         E -->|"Fetches data"| F
-        E -->|"Fetches data"| G
+        F -->|"Fetches data"| G
+        G -->|"Fetches data"| H
     end
 ```
 
@@ -70,9 +72,14 @@ Required environment variables:
 | `ANTHROPIC_API_KEY`\*  | API key for Claude 3.5 (\*if using Claude) | `sk-ant-your-key`     |
 | `OPENAI_API_KEY`\*     | API key for GPT-4 (\*if using GPT-4)       | `sk-your-key`         |
 
-### Vercel KV Setup (Optional)
+### Caching with Vercel KV (optional)
 
-The bot supports optional caching using Vercel KV to improve response times. If you want to enable caching:
+The bot supports two caching modes:
+
+- `no-cache` (default): No caching, fresh context retrieval for every processed message
+- `kv`: [Vercel KV](https://vercel.com/docs/storage/vercel-kv)-based caching (recommended for production)
+
+To enable Vercel KV caching:
 
 1. Install Vercel CLI:
 

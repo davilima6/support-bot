@@ -1,9 +1,6 @@
-import { anthropic } from '@ai-sdk/anthropic';
-import { openai } from '@ai-sdk/openai';
 import type { MessageElement } from '@slack/web-api/dist/types/response/ConversationsHistoryResponse';
-import { generateText } from 'ai';
-
 import { getInitialPrompt, getVerificationPrompt } from './ai-prompts';
+import { AIServiceFactory, type Model } from './services/ai-service';
 
 export function processMessages(messages: MessageElement[] | undefined, allowedUserIds: string[]): string {
   return (
@@ -14,19 +11,15 @@ export function processMessages(messages: MessageElement[] | undefined, allowedU
   );
 }
 
-export async function answerQuestion(question: string | undefined, context: string, model: string): Promise<string> {
+export async function answerQuestion(question: string | undefined, context: string, model: Model): Promise<string> {
   if (!question) {
     throw new Error('Question is required.');
   }
 
-  const aiModel = model === 'gpt-4' ? openai('gpt-4') : anthropic('claude-3.5');
+  const aiService = AIServiceFactory.create(model);
 
   const prompt = getInitialPrompt({ context, question });
-
-  const { text: initialAnswer } = await generateText({
-    model: aiModel,
-    prompt: prompt,
-  });
+  const initialAnswer = await aiService.generateAnswer(prompt);
 
   const verificationPrompt = getVerificationPrompt({
     context,
@@ -34,10 +27,6 @@ export async function answerQuestion(question: string | undefined, context: stri
     initialAnswer,
   });
 
-  const { text: finalAnswer } = await generateText({
-    model: aiModel,
-    prompt: verificationPrompt,
-  });
-
+  const finalAnswer = await aiService.generateAnswer(verificationPrompt);
   return finalAnswer;
 }

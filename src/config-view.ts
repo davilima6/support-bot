@@ -2,6 +2,7 @@ import type { ViewOutput } from '@slack/bolt';
 import type { View } from '@slack/web-api';
 
 import type { BotConfig, CacheMode } from './config';
+import { isModel } from './services/ai-service';
 
 export class ConfigModal {
   constructor(private readonly config: BotConfig) {}
@@ -93,18 +94,18 @@ export class ConfigModal {
             initial_option: {
               text: {
                 type: 'plain_text',
-                text: this.config.cacheMode === 'default' ? 'Default Cache' : 'No Cache',
+                text: this.config.cacheMode === 'no-cache' ? 'No Cache' : 'Vercel KV Cache',
               },
               value: this.config.cacheMode,
             },
             options: [
               {
-                text: { type: 'plain_text', text: 'Default Cache' },
-                value: 'default',
-              },
-              {
                 text: { type: 'plain_text', text: 'No Cache' },
                 value: 'no-cache',
+              },
+              {
+                text: { type: 'plain_text', text: 'Vercel KV' },
+                value: 'kv',
               },
             ],
           },
@@ -130,8 +131,8 @@ export class ConfigModal {
       throw new Error('Channel is required.');
     }
 
-    if (!aiModel) {
-      throw new Error('AI Model is required.');
+    if (!isModel(aiModel)) {
+      throw new Error('AI Model is invalid.');
     }
 
     return {
