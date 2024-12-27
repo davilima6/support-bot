@@ -3,7 +3,7 @@ import { WebClient } from '@slack/web-api';
 
 import { BotConfig, CHANNEL_HISTORY_LIMIT, DEFAULT_CONFIG, DEFAULT_PORT } from './config';
 import { answerQuestion, processMessages } from './services/ai/workflows';
-import { getCachedContext, setCachedContext } from './services/cache';
+import { CacheServiceFactory } from './services/cache/cache';
 import { SettingsModal } from './views/settings-modal';
 
 const app = new App({
@@ -33,7 +33,7 @@ app.command('/configure-ai-bot', async ({ ack, body, client }) => {
   }
 });
 
-// Process configuration modal submission and update bot settings
+// Handle configuration modal submission by updating bot settings
 app.view('config_modal_submit', async ({ ack, body: _, view }) => {
   await ack();
 
@@ -57,11 +57,10 @@ app.message(async ({ message, say }) => {
     return;
   }
 
+  const cacheService = CacheServiceFactory.create(botConfig.cacheMode);
   let contextMessages: string = '';
 
-  if (botConfig.cacheMode === 'kv') {
-    contextMessages = (await getCachedContext(botConfig.channelId)) || '';
-  }
+  contextMessages = (await cacheService.get(botConfig.channelId)) || '';
 
   if (!contextMessages) {
     /** @see https://api.slack.com/methods/conversations.history */
@@ -71,10 +70,7 @@ app.message(async ({ message, say }) => {
     });
 
     contextMessages = processMessages(channelHistory.messages, botConfig.allowedUserIds ?? []);
-
-    if (botConfig.cacheMode === 'kv') {
-      await setCachedContext(botConfig.channelId, contextMessages);
-    }
+    await cacheService.set(botConfig.channelId, contextMessages);
   }
 
   const answer = await answerQuestion(message.text as string, contextMessages, botConfig.aiModel);

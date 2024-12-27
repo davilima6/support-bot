@@ -26,6 +26,7 @@ graph TD
     subgraph App
         C
         E
+        F
     end
     subgraph Optional Caching
         E -.->|"Caches answer"| I["Vercel KV"]
@@ -77,7 +78,7 @@ Required environment variables:
 The bot supports two caching modes:
 
 - `no-cache` (default): No caching, fresh context retrieval for every processed message
-- `kv`: [Vercel KV](https://vercel.com/docs/storage/vercel-kv)-based caching (recommended for production)
+- `kv`: Vercel KV-based caching (recommended for production)
 
 To enable Vercel KV caching:
 
