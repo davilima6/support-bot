@@ -1,3 +1,3 @@
 import './slack-bot';
 
-console.log('SupportBot server started');
+console.info('SupportBot server started');

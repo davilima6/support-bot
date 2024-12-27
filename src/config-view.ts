@@ -1,7 +1,7 @@
 import type { ViewOutput } from '@slack/bolt';
 import type { View } from '@slack/web-api';
 
-import type { BotConfig } from './config';
+import type { BotConfig, CacheMode } from './config';
 
 export class ConfigModal {
   constructor(private readonly config: BotConfig) {}
@@ -79,6 +79,36 @@ export class ConfigModal {
             ],
           },
         },
+        // Cache Mode input
+        {
+          type: 'input',
+          block_id: 'cache_mode',
+          label: {
+            type: 'plain_text',
+            text: 'Cache Mode',
+          },
+          element: {
+            type: 'static_select',
+            action_id: 'cache_mode_select',
+            initial_option: {
+              text: {
+                type: 'plain_text',
+                text: this.config.cacheMode === 'default' ? 'Default Cache' : 'No Cache',
+              },
+              value: this.config.cacheMode,
+            },
+            options: [
+              {
+                text: { type: 'plain_text', text: 'Default Cache' },
+                value: 'default',
+              },
+              {
+                text: { type: 'plain_text', text: 'No Cache' },
+                value: 'no-cache',
+              },
+            ],
+          },
+        },
       ],
       // Submit button
       submit: {
@@ -94,6 +124,7 @@ export class ConfigModal {
     const allowedUserIds =
       values.allowed_user_ids.allowed_user_ids_input.value?.split(',').map((id) => id.trim()) ?? [];
     const aiModel = values.ai_model.ai_model_select.selected_option?.value;
+    const cacheMode = values.cache_mode.cache_mode_select.selected_option?.value as CacheMode;
 
     if (!channelId) {
       throw new Error('Channel is required.');
@@ -104,9 +135,10 @@ export class ConfigModal {
     }
 
     return {
-      channelId,
-      allowedUserIds,
       aiModel,
+      allowedUserIds,
+      channelId,
+      cacheMode,
     };
   }
 }

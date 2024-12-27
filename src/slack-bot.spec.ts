@@ -1,15 +1,20 @@
 import { App, LogLevel } from '@slack/bolt';
-import { WebClient, type View } from '@slack/web-api';
+import { WebClient, type BotMessageEvent, type View } from '@slack/web-api';
 import { beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { answerQuestion, processMessages } from './ai-workflows';
-import { defaultConfig } from './config';
-import { ConfigModal } from './config-modal';
+import { DEFAULT_CONFIG } from './config';
+import { ConfigModal } from './config-view';
 
+// Mock setup
 vi.mock('@slack/bolt');
 vi.mock('@slack/web-api');
 vi.mock('./ai-workflows');
-vi.mock('./config-modal');
+vi.mock('./config-view', () => ({
+  ConfigModal: vi.fn().mockImplementation(() => ({
+    getView: vi.fn(),
+  })),
+}));
 
 type MockedWebClient = { conversations: { history: Mock } };
 
@@ -17,17 +22,11 @@ describe('Slack Bot', () => {
   let app: Partial<App>;
   let mockWebClient: MockedWebClient;
   let messageHandler: Function;
-  let commandHandler: Function;
-  let viewHandler: Function;
 
   beforeAll(() => {
     app = {
-      command: vi.fn((_, handler) => {
-        commandHandler = handler;
-      }),
-      view: vi.fn((_, handler) => {
-        viewHandler = handler;
-      }),
+      command: vi.fn(),
+      view: vi.fn(),
       message: vi.fn((handler) => {
         messageHandler = handler;
       }),
@@ -86,11 +85,13 @@ describe('Slack Bot', () => {
         },
       };
 
-      vi.mocked(ConfigModal.prototype.getView).mockReturnValue(mockView);
+      const mockConfigModal = new ConfigModal(DEFAULT_CONFIG);
+      (mockConfigModal.getView as Mock).mockReturnValueOnce(mockView);
+      vi.mocked(ConfigModal).mockImplementation(() => mockConfigModal);
 
       await handler({ ack: mockAck, body: mockBody, client: mockClient });
 
-      expect(mockAck).toHaveBeenCalled();
+      expect(mockAck).toHaveBeenCalledTimes(1);
       expect(mockClient.views.open).toHaveBeenCalledWith({
         trigger_id: 'test-trigger',
         view: mockView,
@@ -106,36 +107,36 @@ describe('Slack Bot', () => {
 
       await messageHandler({ message, say: mockSay });
 
-      expect(mockSay).not.toHaveBeenCalled();
+      expect(mockSay).not.toHaveBeenCalledTimes(1);
     });
 
     it('ignore bot messages', async () => {
       expect(messageHandler).toBeDefined();
       const mockSay = vi.fn();
-      const message = {
-        channel: defaultConfig.channelId,
+      const message: Partial<BotMessageEvent> = {
+        channel: DEFAULT_CONFIG.channelId,
         subtype: 'bot_message',
         text: 'test message',
       };
 
       await messageHandler({ message, say: mockSay });
 
-      expect(mockSay).not.toHaveBeenCalled();
+      expect(mockSay).not.toHaveBeenCalledTimes(1);
     });
 
     it('processes valid messages and respond', async () => {
       expect(messageHandler).toBeDefined();
       const mockSay = vi.fn();
       const message = {
-        channel: defaultConfig.channelId,
+        channel: DEFAULT_CONFIG.channelId,
         text: 'test message',
       };
       const mockHistory = { messages: [] };
       const mockAnswer = 'AI response';
 
-      mockWebClient.conversations.history.mockResolvedValue(mockHistory);
-      vi.mocked(processMessages).mockReturnValue('');
-      vi.mocked(answerQuestion).mockResolvedValue(mockAnswer);
+      mockWebClient.conversations.history.mockResolvedValueOnce(mockHistory);
+      vi.mocked(processMessages).mockReturnValueOnce('');
+      vi.mocked(answerQuestion).mockResolvedValueOnce(mockAnswer);
 
       await messageHandler({ message, say: mockSay });
 

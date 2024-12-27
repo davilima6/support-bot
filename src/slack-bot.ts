@@ -2,13 +2,9 @@ import { App, LogLevel } from '@slack/bolt';
 import { WebClient } from '@slack/web-api';
 
 import { answerQuestion, processMessages } from './ai-workflows';
-import { BotConfig, defaultConfig } from './config';
-import { ConfigModal } from './config-modal';
-
-const DEFAULT_APP_PORT = 3_000;
-
-/** Maximum of 999 */
-const CHANNEL_HISTORY_LIMIT = 999;
+import { getCachedContext, setCachedContext } from './cache';
+import { BotConfig, CHANNEL_HISTORY_LIMIT, DEFAULT_CONFIG, DEFAULT_PORT } from './config';
+import { ConfigModal } from './config-view';
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -16,10 +12,10 @@ const app = new App({
   logLevel: LogLevel.DEBUG,
 });
 
-const webClient = new WebClient(process.env.SLACK_BOT_TOKEN);
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 
-// Store bot configuration in memory
-let botConfig: BotConfig = defaultConfig;
+// Store config in memory
+let botConfig: BotConfig = DEFAULT_CONFIG;
 
 // Handle /configure-ai-bot command by opening configuration modal
 app.command('/configure-ai-bot', async ({ ack, body, client }) => {
@@ -57,13 +53,30 @@ app.message(async ({ message, say }) => {
     return;
   }
 
-  /** @see https://api.slack.com/methods/conversations.history */
-  const channelHistory = await webClient.conversations.history({
-    channel: botConfig.channelId,
-    limit: CHANNEL_HISTORY_LIMIT,
-  });
+  if (!('text' in message)) {
+    return;
+  }
 
-  const contextMessages = processMessages(channelHistory.messages, botConfig.allowedUserIds ?? []);
+  let contextMessages: string = '';
+
+  if (botConfig.cacheMode === 'default') {
+    contextMessages = (await getCachedContext(botConfig.channelId)) || '';
+  }
+
+  if (!contextMessages) {
+    /** @see https://api.slack.com/methods/conversations.history */
+    const channelHistory = await client.conversations.history({
+      channel: botConfig.channelId,
+      limit: CHANNEL_HISTORY_LIMIT,
+    });
+
+    contextMessages = processMessages(channelHistory.messages, botConfig.allowedUserIds ?? []);
+
+    if (botConfig.cacheMode === 'default') {
+      await setCachedContext(botConfig.channelId, contextMessages);
+    }
+  }
+
   const answer = await answerQuestion(message.text as string, contextMessages, botConfig.aiModel);
 
   if (answer) {
@@ -72,8 +85,8 @@ app.message(async ({ message, say }) => {
 });
 
 (async () => {
-  const port = process.env.PORT || DEFAULT_APP_PORT;
+  const port = process.env.PORT || DEFAULT_PORT;
 
   await app.start(port);
-  console.log(`⚡️ SupportBot is running! (port ${port})`);
+  console.info(`⚡️ SupportBot is running at port ${port})`);
 })();

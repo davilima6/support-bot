@@ -2,6 +2,44 @@
 
 This project is a Slack bot that uses AI to answer questions based on channel context. It uses the Slack API and AI models to provide intelligent responses to user queries.
 
+## Table of Contents
+
+- [Data Flow](#data-flow)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Vercel KV Cache Setup (Optional)](#vercel-kv-cache-setup-optional)
+- [Installing the bot in a Slack organization](#installing-the-bot-in-a-slack-organization)
+
+### Data Flow
+
+```mermaid
+graph TD
+    A["User"] -->|"Sends message"| B["Slack Channel"]
+    B -->|"Bot receives message"| C["Slack Bot"]
+    C -->|"Fetches channel history"| D["Slack API"]
+    D -->|"Returns messages"| C
+    C -->|"Processes messages"| E["AI Workflow"]
+    E -->|"Generates initial answer"| F["AI Model 1"]
+    F -->|"Passes initial answer"| G["AI Model 2"]
+    G -->|"Verifies and improves answer"| E
+    subgraph App
+        C
+        E
+    end
+    subgraph Optional Caching
+        E -->|"Caches answer"| H["Vercel KV"]
+        H -.->|"Returns cached answer"| C
+    end
+    E -->|"Returns final answer"| C
+    C -->|"Sends response"| B
+    B -->|"Displays response"| A
+    subgraph Data Sources
+        C -->|"Fetches data"| D
+        E -->|"Fetches data"| F
+        E -->|"Fetches data"| G
+    end
+```
+
 ## Prerequisites
 
 - Node.js (v22 or later)
@@ -15,63 +53,54 @@ This project is a Slack bot that uses AI to answer questions based on channel co
 1. Clone this repository
 2. Install dependencies:
 
-\`\`\`bash
+```bash
 pnpm install
-\`\`\`
+```
 
 3. Configure environment variables:
 
-| Variable               | Required | Description                                | Example               |
-| ---------------------- | -------- | ------------------------------------------ | --------------------- |
-| `SLACK_BOT_TOKEN`      | Yes      | Bot User OAuth Token from Slack            | `xoxb-your-token`     |
-| `SLACK_SIGNING_SECRET` | Yes      | Signing Secret from Slack App settings     | `your-signing-secret` |
-| `SLACK_CHANNEL_ID`     | No       | Default channel ID for bot to operate in   | `C0123456789`         |
-| `ANTHROPIC_API_KEY`    | Yes\*    | API key for Claude 3.5 (\*if using Claude) | `sk-ant-your-key`     |
-| `OPENAI_API_KEY`       | Yes\*    | API key for GPT-4 (\*if using GPT-4)       | `sk-your-key`         |
-| `PORT`                 | No       | Port to run the server on (default: 3000)  | `3000`                |
+Please copy the provided `.env.example` file as `.env`.
 
-You can create a `.env` file in the root directory with these variables:
+Required environment variables:
 
-\`\`\`env
-SLACK_BOT_TOKEN=xoxb-your-token
-SLACK_SIGNING_SECRET=your-signing-secret
-SLACK_CHANNEL_ID=C0123456789
-ANTHROPIC_API_KEY=sk-ant-your-key
-OPENAI_API_KEY=sk-your-key
-PORT=3000
-\`\`\`
+| Variable               | Description                                | Example               |
+| ---------------------- | ------------------------------------------ | --------------------- |
+| `SLACK_BOT_TOKEN`      | Bot User OAuth Token from Slack            | `xoxb-your-token`     |
+| `SLACK_SIGNING_SECRET` | Signing Secret from Slack App settings     | `your-signing-secret` |
+| `ANTHROPIC_API_KEY`\*  | API key for Claude 3.5 (\*if using Claude) | `sk-ant-your-key`     |
+| `OPENAI_API_KEY`\*     | API key for GPT-4 (\*if using GPT-4)       | `sk-your-key`         |
 
-## Data Flow
+### Vercel KV Setup (Optional)
 
-The following Mermaid chart illustrates the data flow in our Slack Support Bot:
+The bot supports optional caching using Vercel KV to improve response times. If you want to enable caching:
 
-```mermaid
-graph TD
-    A["User"] -->|"Sends message"| B["Slack Channel"]
-    B -->|"Bot receives message"| C["Slack Bot"]
-    C -->|"Fetches channel history"| D["Slack API"]
-    D -->|"Returns messages"| C
-    C -->|"Processes messages"| E["AI Workflow"]
-    E -->|"Generates initial answer"| F["AI Model 1"]
-    F -->|"Passes initial answer"| G["AI Model 2"]
-    G -->|"Verifies and improves answer"| E
-    E -->|"Returns final answer"| C
-    C -->|"Sends response"| B
-    B -->|"Displays response"| A
+1. Install Vercel CLI:
+
+```bash
+npm i -g vercel
 ```
 
-### Explanation of the Data Flow:
+2. Create a new KV database:
 
-1. A user sends a message in a Slack channel where the bot is active.
-2. The Slack Bot receives the message through the Slack API.
-3. The bot fetches the channel history to provide context for the AI models.
-4. The AI Workflow processes the messages, filtering only the ones from configured user (support team).
-5. The first AI model (Claude 3.5 or GPT-4) generates an initial answer based on the question and context.
-6. A second AI model verifies and improves the initial answer.
-7. The final answer is sent back to the Slack channel through the Slack API.
-8. The user sees the bot's response in the Slack channel.
+```bash
+vercel kv create slack-support-bot-cache
+```
 
-This flow ensures that the bot provides contextually relevant and verified answers to user queries.
+3. Link the database to your project:
+
+```bash
+vercel link
+vercel env pull
+```
+
+4. Configure the additional environment variables in your deployment:
+
+```bash
+vercel env add KV_URL
+vercel env add KV_REST_API_URL
+vercel env add KV_REST_API_TOKEN
+vercel env add KV_REST_API_READ_ONLY_TOKEN
+```
 
 ## Installing the bot in a Slack organization
 
@@ -116,7 +145,4 @@ This flow ensures that the bot provides contextually relevant and verified answe
 7. Deploy your bot to a hosting platform (e.g., Heroku, AWS, or DigitalOcean)
 
 8. Invite the bot to your desired Slack channel:
-   - In Slack, go to the channel where you want to use the bot
-   - Type `/invite @your_bot_name`
-
-Now your Slack Support Bot should be installed and ready to use in your Slack organization. Users can configure the bot using the `/configure-ai-bot` slash command.
+   - In Slack, go to the channel where you want to use the bot - Type `/invite @your_bot_name`Now your Slack Support Bot should be installed and ready to use in your Slack organization. Users can configure the bot using the `/configure-ai-bot` slash command.
