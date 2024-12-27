@@ -1,0 +1,26 @@
+{
+  "name": "slack-ai-bot",
+  "version": "1.0.0",
+  "description": "A Slack bot that uses AI to answer questions based on channel context",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "1.0.6",
+    "@ai-sdk/openai": "1.0.11",
+    "@slack/bolt": "4.2.0",
+    "@slack/web-api": "7.8.0",
+    "ai": "4.0.22"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}
