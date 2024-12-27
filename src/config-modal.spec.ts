@@ -1,15 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { ConfigModal } from '../config-modal';
-import { BotConfig } from '../types';
+// Import test utilities and components to test
+import { describe, expect, it } from 'vitest';
+import { BotConfig } from './config';
+import { ConfigModal } from './config-modal';
 
 describe('ConfigModal', () => {
   const defaultConfig: BotConfig = {
     channelId: 'C12345',
-    supportTeamUserIds: ['U1', 'U2'],
+    allowedUserIds: ['U1', 'U2'],
     aiModel: 'claude-3.5',
   };
 
-  it('should generate a valid view', () => {
+  it('generates a view', () => {
     const configModal = new ConfigModal(defaultConfig);
     const view = configModal.getView();
 
@@ -18,7 +19,7 @@ describe('ConfigModal', () => {
     expect(view.blocks.length).toBe(3);
   });
 
-  it('should parse submission correctly', () => {
+  it('parses submission', () => {
     const submissionView = {
       state: {
         values: {
@@ -27,8 +28,8 @@ describe('ConfigModal', () => {
               value: 'C67890',
             },
           },
-          support_team_user_ids: {
-            support_team_user_ids_input: {
+          allowed_user_ids: {
+            allowed_user_ids_input: {
               value: 'U3, U4, U5',
             },
           },
@@ -46,8 +47,7 @@ describe('ConfigModal', () => {
     const parsedConfig = ConfigModal.parseSubmission(submissionView as any);
 
     expect(parsedConfig.channelId).toBe('C67890');
-    expect(parsedConfig.supportTeamUserIds).toEqual(['U3', 'U4', 'U5']);
+    expect(parsedConfig.allowedUserIds).toEqual(['U3', 'U4', 'U5']);
     expect(parsedConfig.aiModel).toBe('gpt-4');
   });
 });
-
