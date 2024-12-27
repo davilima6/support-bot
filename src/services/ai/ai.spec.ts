@@ -1,6 +1,7 @@
 import { generateText } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AIServiceFactory, ClaudeService, GPTService } from './ai-service';
+
+import { AIServiceFactory, ClaudeService, GPTService } from './ai';
 
 vi.mock('ai', () => ({
   generateText: vi.fn(),

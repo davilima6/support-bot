@@ -1,4 +1,4 @@
-import type { Model } from './services/ai-service';
+import type { Model } from './services/ai/ai';
 
 export type CacheMode = 'no-cache' | 'kv';
 

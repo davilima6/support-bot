@@ -1,7 +1,7 @@
 import { generateText } from 'ai';
 import { describe, expect, it, vi } from 'vitest';
 
-import { answerQuestion, processMessages } from './ai-workflows';
+import { answerQuestion, processMessages } from './workflows';
 
 vi.mock('ai', () => ({
   generateText: vi.fn(),

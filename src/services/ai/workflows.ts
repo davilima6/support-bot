@@ -1,6 +1,7 @@
 import type { MessageElement } from '@slack/web-api/dist/types/response/ConversationsHistoryResponse';
-import { getInitialPrompt, getVerificationPrompt } from './ai-prompts';
-import { AIServiceFactory, type Model } from './services/ai-service';
+
+import { AIServiceFactory, type Model } from './ai';
+import { getInitialPrompt, getVerificationPrompt } from './prompts';
 
 export function processMessages(messages: MessageElement[] | undefined, allowedUserIds: string[]): string {
   return (

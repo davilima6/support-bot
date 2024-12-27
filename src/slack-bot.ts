@@ -1,10 +1,10 @@
 import { App, LogLevel } from '@slack/bolt';
 import { WebClient } from '@slack/web-api';
 
-import { answerQuestion, processMessages } from './ai-workflows';
-import { getCachedContext, setCachedContext } from './cache';
 import { BotConfig, CHANNEL_HISTORY_LIMIT, DEFAULT_CONFIG, DEFAULT_PORT } from './config';
-import { ConfigModal } from './config-view';
+import { answerQuestion, processMessages } from './services/ai/workflows';
+import { getCachedContext, setCachedContext } from './services/cache';
+import { SettingsModal } from './views/settings-modal';
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -21,7 +21,7 @@ let botConfig: BotConfig = DEFAULT_CONFIG;
 app.command('/configure-ai-bot', async ({ ack, body, client }) => {
   await ack();
 
-  const configModal = new ConfigModal(botConfig);
+  const configModal = new SettingsModal(botConfig);
 
   try {
     await client.views.open({
@@ -37,7 +37,7 @@ app.command('/configure-ai-bot', async ({ ack, body, client }) => {
 app.view('config_modal_submit', async ({ ack, body: _, view }) => {
   await ack();
 
-  const newConfig = ConfigModal.parseSubmission(view);
+  const newConfig = SettingsModal.parseSubmission(view);
 
   botConfig = { ...botConfig, ...newConfig };
   console.info('Update support bot configuration:', botConfig);

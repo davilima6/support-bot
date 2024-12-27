@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getInitialPrompt, getVerificationPrompt } from './ai-prompts';
+
+import { getInitialPrompt, getVerificationPrompt } from './prompts';
 
 describe('getInitialPrompt', () => {
   it('generates initial prompt with context and question', () => {

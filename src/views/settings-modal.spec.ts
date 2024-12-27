@@ -1,9 +1,9 @@
-// Import test utilities and components to test
 import { describe, expect, it } from 'vitest';
-import { BotConfig } from './config';
-import { ConfigModal } from './config-view';
 
-describe('ConfigModal', () => {
+import type { BotConfig } from '../config';
+import { SettingsModal } from './settings-modal';
+
+describe('Settings modal', () => {
   const defaultConfig: BotConfig = {
     channelId: 'C12345',
     allowedUserIds: ['U1', 'U2'],
@@ -12,7 +12,7 @@ describe('ConfigModal', () => {
   };
 
   it('generates a view', () => {
-    const configModal = new ConfigModal(defaultConfig);
+    const configModal = new SettingsModal(defaultConfig);
     const view = configModal.getView();
 
     expect(view.type).toBe('modal');
@@ -52,7 +52,7 @@ describe('ConfigModal', () => {
       },
     };
 
-    const parsedConfig = ConfigModal.parseSubmission(submissionView as any);
+    const parsedConfig = SettingsModal.parseSubmission(submissionView as any);
 
     expect(parsedConfig.channelId).toBe('C67890');
     expect(parsedConfig.allowedUserIds).toEqual(['U3', 'U4', 'U5']);
@@ -92,7 +92,7 @@ describe('ConfigModal', () => {
       },
     };
 
-    const parsedConfig = ConfigModal.parseSubmission(submissionView as any);
+    const parsedConfig = SettingsModal.parseSubmission(submissionView as any);
     expect(parsedConfig.cacheMode).toBe('kv');
   });
 });

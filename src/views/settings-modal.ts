@@ -1,10 +1,10 @@
 import type { ViewOutput } from '@slack/bolt';
 import type { View } from '@slack/web-api';
 
-import type { BotConfig, CacheMode } from './config';
-import { isModel } from './services/ai-service';
+import type { BotConfig, CacheMode } from '../config';
+import { isModel } from '../services/ai/ai';
 
-export class ConfigModal {
+export class SettingsModal {
   constructor(private readonly config: BotConfig) {}
 
   getView(): View {

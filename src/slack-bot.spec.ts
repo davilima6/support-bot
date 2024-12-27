@@ -2,9 +2,9 @@ import { App, LogLevel } from '@slack/bolt';
 import { WebClient, type BotMessageEvent, type View } from '@slack/web-api';
 import { beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { answerQuestion, processMessages } from './ai-workflows';
 import { DEFAULT_CONFIG } from './config';
-import { ConfigModal } from './config-view';
+import { answerQuestion, processMessages } from './services/ai/workflows';
+import { SettingsModal } from './views/settings-modal';
 
 // Mock setup
 vi.mock('@slack/bolt');
@@ -85,9 +85,9 @@ describe('Slack Bot', () => {
         },
       };
 
-      const mockConfigModal = new ConfigModal(DEFAULT_CONFIG);
+      const mockConfigModal = new SettingsModal(DEFAULT_CONFIG);
       (mockConfigModal.getView as Mock).mockReturnValueOnce(mockView);
-      vi.mocked(ConfigModal).mockImplementation(() => mockConfigModal);
+      vi.mocked(SettingsModal).mockImplementation(() => mockConfigModal);
 
       await handler({ ack: mockAck, body: mockBody, client: mockClient });
 

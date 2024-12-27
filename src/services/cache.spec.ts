@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { clearCachedContext, getCachedContext, setCachedContext } from './cache';
 
-// Mock KV module before importing cache functions
 vi.mock('@vercel/kv', () => ({
   kv: {
     get: vi.fn(),
